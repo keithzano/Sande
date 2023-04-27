@@ -1,44 +1,44 @@
 #include "shell.h"
 
-/**
- * main - entry point
- * @ac: arg count
- * @av: arg vector
- *
- * Return: 0 on success, 1 on error
- */
-int main(int ac, char **av)
+int main(int argc, char **argv)
 {
-	info_t info[] = { INFO_INIT };
-	int fd = 2;
+    int fd = 2;
+    info_t info = INFO_INIT;
 
-	asm ("mov %1, %0\n\t"
-			"add $3, %0"
-			: "=r" (fd)
-			: "r" (fd));
+    // Increment the value of fd by 3 using inline assembly
+    __asm__ __volatile__ ("mov %1, %0\n\tadd $3, %0" : "=r" (fd) : "r" (fd));
 
-	if (ac == 2)
-	{
-		fd = open(av[1], O_RDONLY);
-		if (fd == -1)
-		{
-			if (errno == EACCES)
-				exit(126);
-			if (errno == ENOENT)
-			{
-				_eputs(av[0]);
-				_eputs(": 0: Can't open ");
-				_eputs(av[1]);
-				_eputchar('\n');
-				_eputchar(BUF_FLUSH);
-				exit(127);
-			}
-			return (EXIT_FAILURE);
-		}
-		info->readfd = fd;
-	}
-	populate_env_list(info);
-	read_history(info);
-	hsh(info, av);
-	return (EXIT_SUCCESS);
+    if (argc == 2)
+    {
+        // Open file specified in argv[1] and set it as the readfd
+        fd = open(argv[1], O_RDONLY);
+        if (fd == -1)
+        {
+            // Handle error cases
+            if (errno == EACCES)
+                exit(126);
+            else if (errno == ENOENT)
+            {
+                eputs(argv[0]);
+                eputs(": 0: Can't open ");
+                eputs(argv[1]);
+                eputchar('\n');
+                eputchar(BUF_FLUSH);
+                exit(127);
+            }
+            else
+                return EXIT_FAILURE;
+        }
+        info.readfd = fd;
+    }
+
+    // Populate environment variables list and read command history
+    populate_env_list(&info);
+    read_history(&info);
+
+    // Start the shell
+    hsh(&info, argv);
+
+    // Exit the program
+    return EXIT_SUCCESS;
 }
